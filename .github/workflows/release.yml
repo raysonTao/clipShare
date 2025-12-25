@@ -28,10 +28,22 @@ jobs:
           npm install
           cd ..
           npm install -g pkg
+          npm install -g png-to-ico
 
       - name: Build Windows executable
         run: |
           pkg . --targets node18-win-x64 --output dist/clipShare-win.exe
+
+      - name: Add icon to Windows executable
+        run: |
+          # 转换 PNG 到 ICO
+          npx png-to-ico public/icon.png > dist/icon.ico
+
+          # 安装 rcedit (纯 Node.js 版本)
+          npm install --no-save rcedit
+
+          # 添加图标
+          npx rcedit dist/clipShare-win.exe --set-icon dist/icon.ico
 
       - name: Build Linux executable
         run: |
