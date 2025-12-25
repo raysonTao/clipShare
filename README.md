@@ -14,7 +14,31 @@
 
 ## 快速开始
 
-### 方式一：直接运行（需要Node.js环境）
+### 方式一：下载预编译版本（推荐，无需安装 Node.js）
+
+直接从 [GitHub Releases](https://github.com/raysonTao/clipShare/releases) 下载最新版本：
+
+**Windows:**
+1. 下载 `clipShare-windows-x64.zip`
+2. 解压缩
+3. 双击 `clipShare-win.exe` 运行
+
+**Linux:**
+1. 下载 `clipShare-linux-x64.tar.gz`
+2. 解压缩：`tar -xzf clipShare-linux-x64.tar.gz`
+3. 添加执行权限：`chmod +x clipShare-linux`
+4. 运行：`./clipShare-linux`
+
+**指定端口：**
+```bash
+# Windows
+clipShare-win.exe --port 8080
+
+# Linux
+./clipShare-linux --port 8080
+```
+
+### 方式二：直接运行（需要Node.js环境）
 
 1. 安装依赖：
 ```bash
@@ -222,6 +246,29 @@ npm run dev
 - **server/messageStore.js**: 内存消息存储，带自动清理功能
 - **public/app.js**: 前端WebSocket客户端，处理连接、消息发送/接收
 - **public/style.css**: 响应式UI设计
+
+### CI/CD 自动发布
+
+本项目使用 GitHub Actions 自动构建和发布：
+
+**推送到 main 分支：**
+- 自动构建 Windows 和 Linux 版本
+- 生成构建产物，可在 Actions 页面下载
+
+**创建版本标签（Release）：**
+```bash
+# 创建并推送标签
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+这将触发：
+1. 自动构建 Windows 和 Linux 可执行文件
+2. 创建 GitHub Release
+3. 上传可执行文件到 Release
+4. 用户可直接从 Releases 页面下载
+
+**工作流文件：** `.github/workflows/release.yml`
 
 ## License
 
