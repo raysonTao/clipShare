@@ -176,11 +176,33 @@ server.listen(PORT, () => {
   console.log('按 Ctrl+C 停止服务\n');
 });
 
-// 优雅关闭
-process.on('SIGINT', () => {
-  console.log('\n正在关闭服务器...');
+// 优雅关闭函数
+function gracefulShutdown(signal) {
+  console.log(`\n收到 ${signal} 信号，正在关闭服务器...`);
+
+  // 关闭所有 WebSocket 连接
+  wss.clients.forEach((client) => {
+    client.close();
+  });
+
+  // 关闭 WebSocket 服务器
+  wss.close(() => {
+    console.log('WebSocket 服务器已关闭');
+  });
+
+  // 关闭 HTTP 服务器
   server.close(() => {
-    console.log('服务器已关闭');
+    console.log('HTTP 服务器已关闭');
     process.exit(0);
   });
-});
+
+  // 设置超时强制退出（5秒后）
+  setTimeout(() => {
+    console.log('超时强制退出...');
+    process.exit(0);
+  }, 5000);
+}
+
+// 监听关闭信号
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
