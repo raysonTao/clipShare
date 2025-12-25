@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clipShare - 局域网剪贴板共享</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <h1>clipShare</h1>
+            <p class="subtitle">局域网剪贴板共享工具</p>
+        </header>
+
+        <!-- 连接控制区域 -->
+        <div class="connection-panel">
+            <div class="input-group">
+                <label for="roomId">房间号:</label>
+                <input
+                    type="text"
+                    id="roomId"
+                    placeholder="输入6-8位房间号"
+                    maxlength="16"
+                    autocomplete="off"
+                />
+                <button id="connectBtn" class="btn btn-primary">连接</button>
+            </div>
+            <div class="status-bar">
+                <span class="status-dot" id="statusDot"></span>
+                <span class="status-text" id="statusText">未连接</span>
+                <span class="room-info" id="roomInfo"></span>
+            </div>
+        </div>
+
+        <!-- 消息列表区域 -->
+        <div class="messages-container">
+            <div class="messages-header">
+                <h2>共享内容</h2>
+                <button id="clearBtn" class="btn btn-small" style="display: none;">清空</button>
+            </div>
+            <div id="messagesList" class="messages-list">
+                <div class="empty-state">
+                    <p>暂无共享内容</p>
+                    <p class="hint">在下方输入文本或粘贴图片 (Ctrl+V)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-panel">
+            <div class="input-wrapper">
+                <textarea
+                    id="textInput"
+                    placeholder="输入文本或按 Ctrl+V 粘贴内容..."
+                    rows="3"
+                ></textarea>
+                <div class="input-actions">
+                    <button id="sendTextBtn" class="btn btn-primary">发送文本</button>
+                    <label for="imageInput" class="btn btn-secondary">
+                        选择图片
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    </label>
+                    <span class="paste-hint">💡 可直接 Ctrl+V 粘贴</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <p>提示: 输入相同房间号的设备可以共享剪贴板内容</p>
+        </footer>
+    </div>
+
+    <!-- 图片预览模态框 -->
+    <div id="imageModal" class="modal">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

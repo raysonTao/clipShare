@@ -1,0 +1,28 @@
+{
+  "name": "clipshare",
+  "version": "1.0.0",
+  "description": "局域网剪贴板共享工具",
+  "main": "server/index.js",
+  "bin": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "build:win": "pkg . --targets node18-win-x64 --output dist/clipShare-win.exe",
+    "build:linux": "pkg . --targets node18-linux-x64 --output dist/clipShare-linux",
+    "build:all": "npm run build:win && npm run build:linux"
+  },
+  "keywords": [
+    "clipboard",
+    "share",
+    "websocket",
+    "local-network"
+  ],
+  "author": "",
+  "license": "MIT",
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ],
+    "outputPath": "dist"
+  }
+}
