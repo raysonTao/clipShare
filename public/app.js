@@ -12,6 +12,7 @@ class ClipShareClient {
 
         this.initElements();
         this.bindEvents();
+        this.requestClipboardPermission(); // 预请求剪贴板权限
     }
 
     initElements() {
@@ -72,6 +73,25 @@ class ClipShareClient {
                 this.toggleConnection();
             }
         });
+    }
+
+    // 预请求剪贴板权限
+    async requestClipboardPermission() {
+        try {
+            // 尝试请求剪贴板写入权限
+            if (navigator.permissions && navigator.permissions.query) {
+                const result = await navigator.permissions.query({ name: 'clipboard-write' });
+                console.log('剪贴板权限状态:', result.state);
+
+                // 监听权限变化
+                result.addEventListener('change', () => {
+                    console.log('剪贴板权限已更改为:', result.state);
+                });
+            }
+        } catch (err) {
+            // 某些浏览器可能不支持 permissions API
+            console.log('无法查询剪贴板权限:', err);
+        }
     }
 
     toggleConnection() {
@@ -388,19 +408,77 @@ class ClipShareClient {
             const response = await fetch(dataUrl);
             const blob = await response.blob();
 
-            await navigator.clipboard.write([
-                new ClipboardItem({ [blob.type]: blob })
-            ]);
+            // 方法1: 尝试使用 Clipboard API（现代方法）
+            if (navigator.clipboard && navigator.clipboard.write) {
+                try {
+                    // 主动请求剪贴板权限
+                    const permission = await navigator.permissions.query({ name: 'clipboard-write' });
 
-            button.textContent = '已复制';
-            button.classList.add('copied');
-            setTimeout(() => {
-                button.textContent = '复制';
-                button.classList.remove('copied');
-            }, 2000);
+                    if (permission.state === 'denied') {
+                        throw new Error('剪贴板权限被拒绝');
+                    }
+
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                    ]);
+
+                    button.textContent = '已复制';
+                    button.classList.add('copied');
+                    setTimeout(() => {
+                        button.textContent = '复制';
+                        button.classList.remove('copied');
+                    }, 2000);
+                    return;
+                } catch (clipboardError) {
+                    console.log('Clipboard API 失败，尝试备用方法:', clipboardError);
+                    // 继续尝试其他方法
+                }
+            }
+
+            // 方法2: 使用 Canvas 方法（兼容性更好）
+            const img = new Image();
+            img.onload = async () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    canvas.toBlob(async (blob) => {
+                        try {
+                            if (navigator.clipboard && navigator.clipboard.write) {
+                                await navigator.clipboard.write([
+                                    new ClipboardItem({ 'image/png': blob })
+                                ]);
+
+                                button.textContent = '已复制';
+                                button.classList.add('copied');
+                                setTimeout(() => {
+                                    button.textContent = '复制';
+                                    button.classList.remove('copied');
+                                }, 2000);
+                            } else {
+                                throw new Error('浏览器不支持剪贴板 API');
+                            }
+                        } catch (err) {
+                            console.error('Canvas 方法也失败:', err);
+                            alert('您的浏览器或当前环境不支持图片复制功能\n\n提示：\n1. 请使用 HTTPS 或 localhost 访问\n2. 允许浏览器访问剪贴板权限\n3. 或使用"下载"按钮保存图片');
+                        }
+                    }, 'image/png');
+                } catch (err) {
+                    console.error('Canvas 处理失败:', err);
+                    alert('图片处理失败，请使用"下载"按钮保存图片');
+                }
+            };
+            img.onerror = () => {
+                alert('图片加载失败');
+            };
+            img.src = dataUrl;
+
         } catch (err) {
             console.error('复制图片失败:', err);
-            alert('复制图片失败，请尝试下载');
+            alert('复制图片失败\n\n可能的原因：\n1. 浏览器不支持此功能\n2. 需要在 HTTPS 或 localhost 下使用\n3. 剪贴板权限未授予\n\n请尝试使用"下载"按钮保存图片');
         }
     }
 
