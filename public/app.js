@@ -290,30 +290,53 @@ class ClipShareClient {
     }
 
     handlePaste(event) {
-        // 如果正在输入框中，不处理
-        if (event.target.tagName === 'TEXTAREA' || event.target.tagName === 'INPUT') {
-            return;
-        }
-
         const items = event.clipboardData.items;
+        let hasImage = false;
+        let hasText = false;
 
+        // 检查是否有图片
         for (let item of items) {
             if (item.type.startsWith('image/')) {
-                const file = item.getAsFile();
-                this.sendImage(file);
-                event.preventDefault();
-                return;
-            } else if (item.type === 'text/plain') {
-                item.getAsString(text => {
-                    if (text && this.isConnected) {
-                        this.send({
-                            type: 'text',
-                            content: text
-                        });
+                hasImage = true;
+                break;
+            }
+            if (item.type === 'text/plain') {
+                hasText = true;
+            }
+        }
+
+        // 如果有图片，优先处理图片
+        if (hasImage) {
+            for (let item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    this.sendImage(file);
+                    event.preventDefault();
+
+                    // 如果是在输入框中，清空输入框
+                    if (event.target.tagName === 'TEXTAREA') {
+                        event.target.value = '';
                     }
-                });
-                event.preventDefault();
-                return;
+                    return;
+                }
+            }
+        }
+
+        // 如果在输入框外粘贴文本，自动发送
+        if (hasText && event.target.tagName !== 'TEXTAREA' && event.target.tagName !== 'INPUT') {
+            for (let item of items) {
+                if (item.type === 'text/plain') {
+                    item.getAsString(text => {
+                        if (text && this.isConnected) {
+                            this.send({
+                                type: 'text',
+                                content: text
+                            });
+                        }
+                    });
+                    event.preventDefault();
+                    return;
+                }
             }
         }
     }
@@ -401,7 +424,7 @@ class ClipShareClient {
         this.messagesList.innerHTML = `
             <div class="empty-state">
                 <p>暂无共享内容</p>
-                <p class="hint">在下方输入文本或粘贴图片 (Ctrl+V)</p>
+                <p class="hint">📝 在下方输入文本，或在任意位置按 Ctrl+V 粘贴文本/图片</p>
             </div>
         `;
     }
