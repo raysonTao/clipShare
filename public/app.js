@@ -9,10 +9,12 @@ class ClipShareClient {
         this.isConnected = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
+        this.defaultRoomId = 'public'; // 默认公共房间
 
         this.initElements();
         this.bindEvents();
         this.requestClipboardPermission(); // 预请求剪贴板权限
+        this.autoConnect(); // 自动连接到默认房间
     }
 
     initElements() {
@@ -92,6 +94,19 @@ class ClipShareClient {
             // 某些浏览器可能不支持 permissions API
             console.log('无法查询剪贴板权限:', err);
         }
+    }
+
+    // 自动连接到默认房间
+    autoConnect() {
+        // 设置默认房间号
+        this.roomIdInput.value = this.defaultRoomId;
+        this.roomIdInput.placeholder = '默认公共房间，可修改';
+
+        // 延迟1秒后自动连接（等待 DOM 完全加载）
+        setTimeout(() => {
+            console.log('自动连接到公共房间:', this.defaultRoomId);
+            this.connect();
+        }, 500);
     }
 
     toggleConnection() {
