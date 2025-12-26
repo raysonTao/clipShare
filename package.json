@@ -1,6 +1,6 @@
 {
   "name": "clipshare",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "局域网剪贴板共享工具",
   "main": "server/index.js",
   "bin": "server/index.js",
@@ -21,7 +21,8 @@
   "license": "MIT",
   "pkg": {
     "assets": [
-      "public/**/*"
+      "public/**/*",
+      "certs/**/*"
     ],
     "outputPath": "dist"
   }

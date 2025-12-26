@@ -6,6 +6,8 @@
 
 const express = require('express');
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const WebSocket = require('ws');
 const path = require('path');
 const os = require('os');
@@ -19,7 +21,30 @@ const PORT = portIndex !== -1 && args[portIndex + 1]
   : parseInt(process.env.PORT) || 3000;
 
 const app = express();
-const server = http.createServer(app);
+
+// 检查 SSL 证书是否存在
+const certPath = path.join(__dirname, '../certs/localhost+6.pem');
+const keyPath = path.join(__dirname, '../certs/localhost+6-key.pem');
+const hasSSL = fs.existsSync(certPath) && fs.existsSync(keyPath);
+
+// 根据证书存在与否创建服务器
+let server;
+let protocol;
+if (hasSSL) {
+  const options = {
+    cert: fs.readFileSync(certPath),
+    key: fs.readFileSync(keyPath)
+  };
+  server = https.createServer(options, app);
+  protocol = 'https';
+  console.log('✅ 使用 HTTPS 加密连接');
+} else {
+  server = http.createServer(app);
+  protocol = 'http';
+  console.log('⚠️  使用 HTTP 连接（剪贴板功能可能受限）');
+  console.log('提示: 运行 "mkcert localhost" 生成证书以启用 HTTPS');
+}
+
 const wss = new WebSocket.Server({ server });
 const messageStore = new MessageStore();
 
@@ -127,6 +152,41 @@ wss.on('connection', (ws) => {
           console.log(`房间 ${currentRoomId} 收到${message.type === 'text' ? '文本' : '图片'}消息`);
           break;
 
+        case 'file':
+          // 保存文件消息
+          if (!currentRoomId) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Please join a room first'
+            }));
+            return;
+          }
+
+          const savedFileMessage = messageStore.addMessage(currentRoomId, {
+            type: 'file',
+            filename: message.filename,
+            filesize: message.filesize,
+            filetype: message.filetype,
+            content: message.content
+          });
+
+          // 广播文件消息到房间内所有客户端
+          if (roomConnections.has(currentRoomId)) {
+            const fileBroadcast = JSON.stringify({
+              type: 'new_message',
+              message: savedFileMessage
+            });
+
+            roomConnections.get(currentRoomId).forEach((client) => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(fileBroadcast);
+              }
+            });
+          }
+
+          console.log(`房间 ${currentRoomId} 收到文件消息: ${message.filename}`);
+          break;
+
         default:
           ws.send(JSON.stringify({
             type: 'error',
@@ -170,9 +230,14 @@ server.listen(PORT, () => {
   console.log('\n=================================');
   console.log('  clipShare 服务已启动!');
   console.log('=================================');
-  console.log(`\n本机访问: http://localhost:${PORT}`);
-  console.log(`局域网访问: http://${localIP}:${PORT}`);
+  console.log(`\n本机访问: ${protocol}://localhost:${PORT}`);
+  console.log(`局域网访问: ${protocol}://${localIP}:${PORT}`);
   console.log('\n在其他设备的浏览器中输入局域网地址即可使用');
+  if (hasSSL) {
+    console.log('\n🔒 HTTPS 已启用，剪贴板功能完全可用');
+  } else {
+    console.log('\n⚠️  HTTP 模式：剪贴板功能可能受限');
+  }
   console.log('按 Ctrl+C 停止服务\n');
 });
 

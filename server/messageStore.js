@@ -8,7 +8,7 @@ class MessageStore {
     // 存储结构: { roomId: { messages: [], totalSize: 0 } }
     this.rooms = new Map();
     this.MAX_MESSAGES = 5;
-    this.MAX_SIZE = 50 * 1024 * 1024; // 50MB
+    this.MAX_SIZE = 100 * 1024 * 1024; // 100MB
   }
 
   /**

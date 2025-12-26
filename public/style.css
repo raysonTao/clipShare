@@ -317,6 +317,92 @@ body {
     background: #28a745;
 }
 
+/* 文件信息样式 */
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.file-icon {
+    font-size: 32px;
+    line-height: 1;
+}
+
+.file-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-weight: 600;
+    color: #495057;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-meta {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+/* 拖拽上传区域 */
+.drop-zone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(102, 126, 234, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.drop-zone-content {
+    text-align: center;
+    color: white;
+}
+
+.drop-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.drop-zone-content p {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 8px 0;
+}
+
+.drop-hint {
+    font-size: 14px !important;
+    opacity: 0.9;
+}
+
+/* 消息列表需要相对定位以支持拖拽区域 */
+.messages-list {
+    position: relative;
+}
+
 /* 输入面板 */
 .input-panel {
     padding: 20px 30px;

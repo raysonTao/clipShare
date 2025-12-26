@@ -48,9 +48,18 @@
                 <button id="clearBtn" class="btn btn-small" style="display: none;">清空</button>
             </div>
             <div id="messagesList" class="messages-list">
+                <!-- 拖拽提示层 -->
+                <div id="dropZone" class="drop-zone" style="display: none;">
+                    <div class="drop-zone-content">
+                        <div class="drop-icon">📁</div>
+                        <p>拖放文件到这里上传</p>
+                        <p class="drop-hint">支持任意文件，单个文件最大 50MB</p>
+                    </div>
+                </div>
+
                 <div class="empty-state">
                     <p>暂无共享内容</p>
-                    <p class="hint">📝 在下方输入文本，或在任意位置按 Ctrl+V 粘贴文本/图片</p>
+                    <p class="hint">📝 在下方输入文本，或在任意位置按 Ctrl+V 粘贴文本/图片/文件</p>
                 </div>
             </div>
         </div>
@@ -69,7 +78,11 @@
                         选择图片
                         <input type="file" id="imageInput" accept="image/*" style="display: none;">
                     </label>
-                    <span class="paste-hint">💡 可在任意位置 Ctrl+V 粘贴图片</span>
+                    <label for="fileInput" class="btn btn-secondary">
+                        选择文件
+                        <input type="file" id="fileInput" accept="*/*" style="display: none;">
+                    </label>
+                    <span class="paste-hint">💡 可在任意位置 Ctrl+V 粘贴或拖拽文件</span>
                 </div>
             </div>
         </div>

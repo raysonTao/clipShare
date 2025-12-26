@@ -419,81 +419,79 @@ class ClipShareClient {
 
     async copyImage(button, dataUrl) {
         try {
-            // 将 base64 转换为 blob
-            const response = await fetch(dataUrl);
-            const blob = await response.blob();
-
-            // 方法1: 尝试使用 Clipboard API（现代方法）
-            if (navigator.clipboard && navigator.clipboard.write) {
-                try {
-                    // 主动请求剪贴板权限
-                    const permission = await navigator.permissions.query({ name: 'clipboard-write' });
-
-                    if (permission.state === 'denied') {
-                        throw new Error('剪贴板权限被拒绝');
-                    }
-
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ [blob.type]: blob })
-                    ]);
-
-                    button.textContent = '已复制';
-                    button.classList.add('copied');
-                    setTimeout(() => {
-                        button.textContent = '复制';
-                        button.classList.remove('copied');
-                    }, 2000);
-                    return;
-                } catch (clipboardError) {
-                    console.log('Clipboard API 失败，尝试备用方法:', clipboardError);
-                    // 继续尝试其他方法
-                }
+            // 检查 API 支持
+            if (!navigator.clipboard || !navigator.clipboard.write) {
+                alert('您的浏览器不支持剪贴板 API\n\n建议：使用最新版 Chrome/Edge 浏览器');
+                return;
             }
 
-            // 方法2: 使用 Canvas 方法（兼容性更好）
-            const img = new Image();
-            img.onload = async () => {
-                try {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
+            // 关键优化：同步转换 base64 为 blob，避免异步导致的权限丢失
+            // 在 HTTP 环境下，异步操作会导致用户手势上下文丢失
+            let blob;
 
-                    canvas.toBlob(async (blob) => {
-                        try {
-                            if (navigator.clipboard && navigator.clipboard.write) {
-                                await navigator.clipboard.write([
-                                    new ClipboardItem({ 'image/png': blob })
-                                ]);
-
-                                button.textContent = '已复制';
-                                button.classList.add('copied');
-                                setTimeout(() => {
-                                    button.textContent = '复制';
-                                    button.classList.remove('copied');
-                                }, 2000);
-                            } else {
-                                throw new Error('浏览器不支持剪贴板 API');
-                            }
-                        } catch (err) {
-                            console.error('Canvas 方法也失败:', err);
-                            alert('您的浏览器或当前环境不支持图片复制功能\n\n提示：\n1. 请使用 HTTPS 或 localhost 访问\n2. 允许浏览器访问剪贴板权限\n3. 或使用"下载"按钮保存图片');
-                        }
-                    }, 'image/png');
-                } catch (err) {
-                    console.error('Canvas 处理失败:', err);
-                    alert('图片处理失败，请使用"下载"按钮保存图片');
+            // 直接从 data URL 同步提取 blob
+            if (dataUrl.startsWith('data:image/')) {
+                // 解析 data URL
+                const parts = dataUrl.split(',');
+                if (parts.length !== 2) {
+                    throw new Error('无效的图片数据');
                 }
-            };
-            img.onerror = () => {
-                alert('图片加载失败');
-            };
-            img.src = dataUrl;
+
+                // 提取 MIME 类型
+                const mimeMatch = parts[0].match(/:(.*?);/);
+                const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+
+                // Base64 解码
+                const binaryString = atob(parts[1]);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+                blob = new Blob([bytes], { type: mime });
+            } else {
+                throw new Error('不支持的图片格式');
+            }
+
+            // 立即写入剪贴板（在用户手势上下文中）
+            // 不使用 permissions.query，因为那也是异步的
+            await navigator.clipboard.write([
+                new ClipboardItem({ [blob.type]: blob })
+            ]);
+
+            // 成功提示
+            button.textContent = '已复制';
+            button.classList.add('copied');
+            setTimeout(() => {
+                button.textContent = '复制';
+                button.classList.remove('copied');
+            }, 2000);
 
         } catch (err) {
             console.error('复制图片失败:', err);
-            alert('复制图片失败\n\n可能的原因：\n1. 浏览器不支持此功能\n2. 需要在 HTTPS 或 localhost 下使用\n3. 剪贴板权限未授予\n\n请尝试使用"下载"按钮保存图片');
+
+            // 详细的错误提示
+            let errorMsg = '图片复制失败\n\n';
+
+            if (err.name === 'NotAllowedError' || err.message.includes('permission')) {
+                errorMsg += '原因：剪贴板权限被拒绝\n\n';
+                errorMsg += '解决方案：\n';
+                errorMsg += '1. 点击地址栏的锁图标，允许剪贴板权限\n';
+                errorMsg += '2. 或使用 HTTPS 访问（推荐）\n';
+                errorMsg += '3. 或使用"下载"按钮保存图片';
+            } else if (window.location.protocol === 'http:') {
+                errorMsg += '⚠️ 您正在使用 HTTP 访问\n\n';
+                errorMsg += 'HTTP 环境下剪贴板功能受限！\n\n';
+                errorMsg += '解决方案：\n';
+                errorMsg += '1. 使用 HTTPS 访问（强烈推荐）\n';
+                errorMsg += '2. 或在浏览器中允许此网站的剪贴板权限\n';
+                errorMsg += '3. 或使用"下载"按钮保存图片';
+            } else {
+                errorMsg += '原因：' + err.message + '\n\n';
+                errorMsg += '建议：使用"下载"按钮保存图片';
+            }
+
+            alert(errorMsg);
         }
     }
 
