@@ -24,11 +24,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          npm install -g pkg
           cd server
           npm install
           cd ..
-          npm install -g pkg
-          npm install -g png-to-ico
 
       - name: Build Windows executable
         run: |
@@ -36,11 +35,12 @@ jobs:
 
       - name: Add icon to Windows executable
         run: |
-          # 转换 PNG 到 ICO
-          npx png-to-ico public/icon.png > dist/icon.ico
-
-          # 安装 rcedit (纯 Node.js 版本)
+          # 安装必要的工具
+          npm install -g png-to-ico
           npm install --no-save rcedit
+
+          # 转换 PNG 到 ICO
+          png-to-ico public/icon.png > dist/icon.ico
 
           # 添加图标
           npx rcedit dist/clipShare-win.exe --set-icon dist/icon.ico
