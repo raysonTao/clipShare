@@ -34,16 +34,18 @@ jobs:
           pkg . --targets node18-win-x64 --output dist/clipShare-win.exe
 
       - name: Add icon to Windows executable
+        continue-on-error: true
         run: |
-          # 安装必要的工具
-          npm install -g png-to-ico
-          npm install --no-save rcedit
+          # 尝试添加图标（可选步骤，失败不影响构建）
+          npm install --no-save rcedit to-ico-cli
 
           # 转换 PNG 到 ICO
-          png-to-ico public/icon.png > dist/icon.ico
+          npx to-ico public/icon.png > dist/icon.ico || echo "图标转换失败，跳过"
 
           # 添加图标
-          npx rcedit dist/clipShare-win.exe --set-icon dist/icon.ico
+          if [ -f dist/icon.ico ]; then
+            npx rcedit dist/clipShare-win.exe --set-icon dist/icon.ico || echo "图标添加失败，跳过"
+          fi
 
       - name: Build Linux executable
         run: |
